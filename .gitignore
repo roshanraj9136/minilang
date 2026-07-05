@@ -1,0 +1,15 @@
+# Compiler build artifacts
+/minilang
+src/*.o
+temp_transpiled.cpp
+
+# Emscripten SDK
+/emsdk/
+
+# Local tests output (if any)
+*.out
+*.exe
+
+# OS generated files
+.DS_Store
+.directory

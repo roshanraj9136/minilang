@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniLang Compiler Web Playground</title>
+    <meta name="description" content="An interactive web playground for compiling and debugging MiniLang code using a stack-based virtual machine and a real-time TUI debugger simulator.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">M</div>
+            <h1>MiniLang Web Playground</h1>
+        </div>
+        <div class="header-controls">
+             <select id="preset-selector">
+                <option value="grid_dp_showcase" selected>2D Grid DP Pathfinding</option>
+                <option value="graph_bfs_showcase">Graph BFS Traversal</option>
+                <option value="matrix_showcase">Matrix Multiplication</option>
+                <option value="pointer_showcase">Advanced Pointer Swap & References</option>
+            </select>
+            <button id="btn-run" class="primary" disabled>Run Code</button>
+            <button id="btn-debug" disabled>Debug Mode</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Source Editor</span>
+            </div>
+            <div class="editor-container">
+                <div id="editor"></div>
+            </div>
+        </div>
+
+        <div class="output-container">
+            <div class="panel" style="flex: 1; display: flex; flex-direction: column; height: 100%;">
+                <div class="panel-header" style="justify-content: flex-start; gap: 0.5rem; padding: 0;">
+                    <div class="tab-btn active" id="tab-console">Console Output</div>
+                    <div class="tab-btn" id="tab-debugger">Visual Debugger</div>
+                </div>
+                
+                <div class="tab-content active" id="content-console">
+                    <div id="console-output" class="console-output"><span style="color: #45a29e; font-weight: 600;">[SYSTEM]</span> Awaiting WebAssembly environment initialization...</div>
+                </div>
+                
+                <div class="tab-content" id="content-debugger">
+                    <div class="tui-terminal">
+                        <div class="tui-grid">
+                            <div class="tui-card">
+                                <div class="tui-card-title">Source Code</div>
+                                <div id="tui-source" class="tui-card-content"></div>
+                            </div>
+                            <div class="tui-card">
+                                <div class="tui-card-title">Bytecode</div>
+                                <div id="tui-bytecode" class="tui-card-content"></div>
+                            </div>
+                            <div class="tui-card">
+                                <div class="tui-card-title">Active Local Variables</div>
+                                <div id="tui-variables" class="tui-card-content"></div>
+                            </div>
+                            <div class="tui-card">
+                                <div class="tui-card-title">Stack</div>
+                                <div id="tui-stack" class="tui-card-content"></div>
+                            </div>
+                            <div class="tui-debugger-controls">
+                                <div class="tui-debugger-buttons">
+                                    <button id="btn-step" disabled>Step</button>
+                                    <button id="btn-step-over" disabled>Next Line</button>
+                                    <button id="btn-continue" disabled>Continue</button>
+                                    <button id="btn-stop" disabled>Stop</button>
+                                </div>
+                                <div id="tui-ip-display">IP: 0000</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+    <script>
+        var Module = {
+            onRuntimeInitialized: function() {
+                document.getElementById('btn-run').disabled = false;
+                document.getElementById('btn-debug').disabled = false;
+                const consoleOutput = document.getElementById('console-output');
+                if (consoleOutput) {
+                    consoleOutput.innerHTML = '<span style="color: #45a29e; font-weight: 600;">[SYSTEM]</span> WebAssembly core targets successfully loaded.<br><span style="color: #66fcf1; font-weight: 600;">[SUCCESS]</span> Compiler initialized. Ready to execute program code.';
+                }
+            }
+        };
+    </script>
+    <script src="minilang.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

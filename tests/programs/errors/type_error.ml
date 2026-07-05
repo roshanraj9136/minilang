@@ -1,0 +1,5 @@
+fn main() {
+    let x: int = 5;
+    let y: bool = true;
+    print(x + y);
+}
