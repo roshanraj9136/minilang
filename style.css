@@ -23,10 +23,10 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
     font-family: var(--font-sans);
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 header {
@@ -144,6 +144,9 @@ main {
     max-width: 1600px;
     width: 100%;
     margin: 0 auto;
+    height: calc(100vh - 80px);
+    min-height: 0;
+    overflow: hidden;
 }
 
 .panel {
@@ -176,7 +179,7 @@ main {
 .editor-container {
     flex: 1;
     position: relative;
-    min-height: 500px;
+    min-height: 0;
 }
 
 #editor {
@@ -219,11 +222,14 @@ main {
 .tab-content {
     display: none;
     flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .tab-content.active {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .console-output {
@@ -245,9 +251,12 @@ main {
     font-family: var(--font-mono);
     font-size: 0.85rem;
     padding: 1rem;
-    overflow: auto;
+    overflow: hidden;
     line-height: 1.4;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .tui-grid {
@@ -256,7 +265,8 @@ main {
     grid-template-rows: 1.6fr 1fr auto;
     gap: 0.75rem;
     height: 100%;
-    min-height: 480px;
+    min-height: 0;
+    flex: 1;
 }
 
 .tui-card {
@@ -317,7 +327,6 @@ main {
 .tui-debugger-buttons button {
     padding: 0.25rem 0.75rem;
     font-size: 0.8rem;
-}
 }
 
 footer {
