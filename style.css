@@ -1,16 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --bg-dark: #0a0d14;
-    --bg-card: #121620;
-    --accent-blue: #00f2fe;
-    --accent-green: #00e676;
-    --accent-glow: rgba(0, 242, 254, 0.2);
-    --text-primary: #a0aec0;
-    --text-light: #ffffff;
-    --border-color: #1e293b;
-    --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
-    --font-sans: 'Outfit', sans-serif;
+    --bg-dark: #0d1117;
+    --bg-panel: #161b22;
+    --border-color: #30363d;
+    --text-primary: #c9d1d9;
+    --text-secondary: #8b949e;
+    --text-white: #f0f6fc;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-red: #f85149;
+    --font-sans: 'Inter', sans-serif;
     --font-mono: 'Fira Code', monospace;
 }
 
@@ -31,154 +31,144 @@ body {
 }
 
 header {
-    background: linear-gradient(90deg, #121620 0%, #0a0d14 100%);
+    background-color: var(--bg-panel);
     border-bottom: 1px solid var(--border-color);
-    padding: 0.85rem 2rem;
+    padding: 0.75rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: var(--shadow-premium);
     z-index: 10;
 }
 
 .logo-container {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .logo-icon {
-    width: 2.2rem;
-    height: 2.2rem;
-    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-green) 100%);
-    border-radius: 8px;
+    width: 1.8rem;
+    height: 1.8rem;
+    background-color: var(--accent-blue);
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #0a0d14;
-    font-weight: 800;
-    font-size: 1.2rem;
-    box-shadow: 0 0 15px var(--accent-glow);
+    color: var(--bg-dark);
+    font-weight: 700;
+    font-size: 1.1rem;
 }
 
 h1 {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--text-light);
-    letter-spacing: -0.5px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-white);
 }
 
 .header-controls {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-}
-
-select {
-    background-color: var(--bg-dark);
-    color: var(--text-light);
-    border: 1px solid var(--border-color);
-    padding: 0.45rem 1rem;
-    border-radius: 6px;
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    cursor: pointer;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-select:hover {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 8px var(--accent-glow);
-}
-
-button {
-    background-color: transparent;
-    color: var(--text-light);
-    border: 1px solid var(--border-color);
-    padding: 0.45rem 1.15rem;
-    border-radius: 6px;
-    font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 0.85rem;
-    cursor: pointer;
-    outline: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
     gap: 0.5rem;
 }
 
+select {
+    background-color: #21262d;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+select:hover {
+    background-color: #30363d;
+    border-color: #8b949e;
+}
+
+button {
+    background-color: #21262d;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 0.82rem;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
 button:hover {
-    background-color: rgba(0, 242, 254, 0.05);
-    border-color: var(--accent-blue);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px var(--accent-glow);
+    background-color: #30363d;
+    border-color: #8b949e;
+    color: var(--text-white);
 }
 
 button.primary {
-    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-green) 100%);
-    color: #0a0d14;
-    border: none;
+    background-color: var(--accent-green);
+    color: var(--text-white);
+    border: 1px solid rgba(240, 246, 252, 0.1);
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
 }
 
 button.primary:hover {
-    background: linear-gradient(135deg, #33f8ff 0%, #33ff99 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+    background-color: #2ea043;
+    color: var(--text-white);
+    border-color: rgba(240, 246, 252, 0.2);
 }
 
 button:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
+    background-color: #21262d !important;
     border-color: var(--border-color) !important;
-    background-color: transparent !important;
-    color: var(--text-primary) !important;
+    color: var(--text-secondary) !important;
 }
 
 main {
     flex: 1;
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    padding: 1.25rem;
-    gap: 1.25rem;
-    max-width: 1800px;
+    grid-template-columns: 1fr 1fr;
+    padding: 1rem;
+    gap: 1rem;
     width: 100%;
-    margin: 0 auto;
-    height: calc(100vh - 70px);
+    height: calc(100vh - 55px);
     min-height: 0;
     overflow: hidden;
 }
 
 .panel {
-    background-color: var(--bg-card);
+    background-color: var(--bg-panel);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 6px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: var(--shadow-premium);
 }
 
 .panel-header {
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: #1f242c;
     border-bottom: 1px solid var(--border-color);
-    padding: 0.65rem 1.25rem;
+    padding: 0.5rem 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .panel-title {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: var(--text-light);
+    color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .editor-container {
@@ -202,26 +192,25 @@ main {
 }
 
 .tab-btn {
-    padding: 0.65rem 1.5rem;
-    font-size: 0.85rem;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-secondary);
     cursor: pointer;
     border-bottom: 2px solid transparent;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .tab-btn:hover {
-    color: var(--accent-blue);
-    background-color: rgba(0, 242, 254, 0.03);
+    color: var(--text-primary);
 }
 
 .tab-btn.active {
-    color: var(--text-light);
+    color: var(--text-white);
     border-bottom-color: var(--accent-blue);
-    background-color: rgba(0, 242, 254, 0.06);
+    background-color: rgba(88, 166, 255, 0.05);
 }
 
 .tab-content {
@@ -244,14 +233,14 @@ main {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #07090e;
+    background-color: #0d1117;
     font-family: var(--font-mono);
-    font-size: 0.88rem;
-    padding: 1.25rem;
+    font-size: 0.85rem;
+    padding: 1rem;
     overflow-y: auto;
-    color: #e2e8f0;
+    color: var(--text-primary);
     white-space: pre-wrap;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .tui-terminal {
@@ -260,11 +249,11 @@ main {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #07090e;
-    color: #cbd5e1;
+    background-color: #0d1117;
+    color: var(--text-primary);
     font-family: var(--font-mono);
-    font-size: 0.82rem;
-    padding: 0.75rem;
+    font-size: 0.8rem;
+    padding: 0.5rem;
     overflow: hidden;
     line-height: 1.4;
     display: flex;
@@ -273,13 +262,13 @@ main {
 
 .tui-grid {
     display: grid;
-    grid-template-columns: 1.1fr 1fr 1fr;
+    grid-template-columns: 1.2fr 1fr 1fr;
     grid-template-rows: 1fr 1fr auto;
     grid-template-areas: 
         "source bytecode variables"
         "source bytecode stack"
         "controls controls controls";
-    gap: 0.65rem;
+    gap: 0.5rem;
     height: 100%;
     min-height: 0;
     flex: 1;
@@ -287,9 +276,9 @@ main {
 
 .tui-card {
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 0.65rem;
-    background-color: rgba(18, 22, 32, 0.7);
+    border-radius: 4px;
+    padding: 0.5rem;
+    background-color: var(--bg-panel);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -303,37 +292,36 @@ main {
 .tui-debugger-controls { grid-area: controls; }
 
 .tui-card-title {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     color: var(--accent-blue);
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.25rem;
-    margin-bottom: 0.45rem;
-    letter-spacing: 0.5px;
+    padding-bottom: 0.2rem;
+    margin-bottom: 0.4rem;
 }
 
 .tui-card-content {
     flex: 1;
     overflow-y: auto;
     white-space: pre;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
 .tui-line-active {
-    background-color: rgba(0, 242, 254, 0.15);
-    border-left: 3px solid var(--accent-blue);
-    color: #ffffff;
+    background-color: #1f242c;
+    border-left: 2px solid var(--accent-blue);
+    color: var(--text-white);
     font-weight: 500;
-    padding-left: 2px;
+    padding-left: 3px;
 }
 
 .tui-inst-active {
-    background-color: rgba(0, 230, 118, 0.15);
-    border-left: 3px solid var(--accent-green);
-    color: #ffffff;
+    background-color: #1b241c;
+    border-left: 2px solid var(--accent-green);
+    color: var(--text-white);
     font-weight: 500;
-    padding-left: 2px;
+    padding-left: 3px;
 }
 
 .tui-debugger-controls {
@@ -341,34 +329,25 @@ main {
     justify-content: space-between;
     align-items: center;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 0.45rem 1rem;
-    background-color: rgba(18, 22, 32, 0.9);
+    border-radius: 4px;
+    padding: 0.4rem 0.75rem;
+    background-color: var(--bg-panel);
 }
 
 .tui-debugger-buttons {
     display: flex;
-    gap: 0.45rem;
+    gap: 0.4rem;
 }
 
 .tui-debugger-buttons button {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.78rem;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
 }
 
 #tui-ip-display {
     font-weight: 600;
-    color: var(--accent-blue);
-    font-size: 0.85rem;
-}
-
-footer {
-    border-top: 1px solid var(--border-color);
-    padding: 1rem 2rem;
-    text-align: center;
-    font-size: 0.85rem;
-    color: rgba(197, 198, 199, 0.6);
-    background-color: rgba(11, 12, 16, 0.8);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
 }
 
 ::-webkit-scrollbar {
@@ -381,10 +360,10 @@ footer {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #1e293b;
+    background: #30363d;
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-green);
+    background: #8b949e;
 }
