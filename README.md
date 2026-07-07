@@ -1,14 +1,14 @@
-# MiniLang Web Playground 🚀
+# MiniLang Web Playground
 
 Welcome to **MiniLang**, a custom statically-typed programming language, compiler, virtual machine, and visual debugger playground that I built from scratch! 
 
 This playground allows you to write, run, and step through code directly in your browser.
 
-👉 **Live Demo**: [minilang-one.vercel.app](https://minilang-one.vercel.app/)
+**Live Demo**: [minilang-one.vercel.app](https://minilang-one.vercel.app/)
 
 ---
 
-## 💡 What is MiniLang?
+## What is MiniLang?
 MiniLang is an imperative programming language designed to look and feel like standard C++. 
 
 Instead of just compiling code to run invisibly, I wanted to create a tool that helps developers **see exactly how code runs on a CPU**. I built:
@@ -19,11 +19,11 @@ Instead of just compiling code to run invisibly, I wanted to create a tool that 
 
 ---
 
-## 🛠️ How it Works (Under the Hood)
+## How it Works (Under the Hood)
 When you write code and click **Run** or **Debug**, the application executes a complete pipeline:
 
 ```
-[ Your Code (.ml) ] ──► [ Custom Compiler ] ──► [ Stack Bytecode ] ──► [ Stack VM (Wasm) ] ──► [ Web Dashboard ]
+[ Your Code (.ml) ] -> [ Custom Compiler ] -> [ Stack Bytecode ] -> [ Stack VM (Wasm) ] -> [ Web Dashboard ]
 ```
 
 * **Lexing & Parsing**: The editor scans your characters, validates syntax, and builds an Abstract Syntax Tree (AST).
@@ -33,7 +33,7 @@ When you write code and click **Run** or **Debug**, the application executes a c
 
 ---
 
-## ✨ Playground Features
+## Playground Features
 * **Modern Code Editor**: Syntax highlighting, auto-completions, and a clean dark theme.
 * **Instruction-Level Watch Panels**:
   * **Source Code View**: Highlights the currently active line of code in blue as you execute.
@@ -44,7 +44,7 @@ When you write code and click **Run** or **Debug**, the application executes a c
 
 ---
 
-## 📝 MiniLang Code Syntax Cheat Sheet
+## MiniLang Code Syntax Cheat Sheet
 
 Here are simple examples of the syntax supported in my language:
 
@@ -94,7 +94,7 @@ int main() {
 
 ---
 
-## 💻 Running the Playground Locally
+## Running the Playground Locally
 
 If you want to clone my repository and run the website locally:
 
@@ -109,4 +109,4 @@ If you want to clone my repository and run the website locally:
    python3 -m http.server 8000
    ```
 3. **Open in browser**:
-   Navigate to [http://localhost:8000/web](http://localhost:8000/web) (or [http://localhost:8000](http://localhost:8000) depending on directory structure).
+   Navigate to [http://localhost:8000/web](http://localhost:8000/web) in your browser.
