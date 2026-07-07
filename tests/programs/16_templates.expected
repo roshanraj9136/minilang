@@ -1,5 +1,0 @@
-p = (3, 4)
-v size = 3, elements: 10 20 30 
-q size = 2, front = 100
-q empty = false, new front = 200
-adj[0] = (1, 10)
