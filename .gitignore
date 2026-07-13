@@ -14,9 +14,7 @@ temp_transpiled.cpp
 .DS_Store
 .directory
 
-# WASM build output
 web/minilang.js
 web/minilang.wasm
 
-# Dependency files
 *.d

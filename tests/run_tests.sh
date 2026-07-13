@@ -1,6 +1,4 @@
 #!/bin/bash
-# MiniLang Test Runner
-# Runs all .ml test files against their .expected output files
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MINILANG="$SCRIPT_DIR/../minilang"
