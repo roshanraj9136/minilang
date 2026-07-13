@@ -111,6 +111,7 @@ int main() {
 
 let editor;
 let isDebugging = false;
+let isStepping = false;
 
 require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
 require(['vs/editor/editor.main'], function () {
@@ -151,7 +152,8 @@ document.getElementById('preset-selector').addEventListener('change', (e) => {
 function logConsole(text, isError = false) {
     const consoleOutput = document.getElementById('console-output');
     if (isError) {
-        consoleOutput.innerHTML = `<span style="color: #ff7b72; font-weight: 500;">${text}</span>`;
+        const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        consoleOutput.innerHTML = `<span style="color: #ff7b72; font-weight: 500;">${escaped}</span>`;
         return;
     }
 
@@ -274,6 +276,7 @@ document.getElementById('btn-debug').addEventListener('click', () => {
 
 function stopDebugging() {
     isDebugging = false;
+    isStepping = false;
     document.getElementById('btn-debug').textContent = "Debug Mode";
     document.getElementById('btn-run').disabled = false;
     enableDebugButtons(false);
@@ -287,7 +290,7 @@ function stopDebugging() {
 document.getElementById('btn-stop').addEventListener('click', stopDebugging);
 
 document.getElementById('btn-step').addEventListener('click', () => {
-    if (!isDebugging) return;
+    if (!isDebugging || isStepping) return;
     const running = Module.ccall('wasm_debug_step', 'number', [], []);
     updateTui();
     if (!running) {
@@ -297,28 +300,54 @@ document.getElementById('btn-step').addEventListener('click', () => {
 });
 
 document.getElementById('btn-step-over').addEventListener('click', () => {
-    if (!isDebugging) return;
+    if (!isDebugging || isStepping) return;
+    isStepping = true;
+    enableDebugButtons(false);
     const startLine = Module.ccall('wasm_debug_current_line', 'number', [], []);
-    let running = true;
-    while (running && Module.ccall('wasm_debug_current_line', 'number', [], []) === startLine) {
-        running = Module.ccall('wasm_debug_step', 'number', [], []);
+
+    function doStep() {
+        if (!isDebugging) { isStepping = false; return; }
+        const running = Module.ccall('wasm_debug_step', 'number', [], []);
+        if (!running) {
+            isStepping = false;
+            updateTui();
+            logConsole(Module.ccall('wasm_debug_output', 'string', [], []) + "\n\nProgram execution completed.");
+            stopDebugging();
+            return;
+        }
+        if (Module.ccall('wasm_debug_current_line', 'number', [], []) !== startLine) {
+            isStepping = false;
+            enableDebugButtons(true);
+            updateTui();
+            return;
+        }
+        setTimeout(doStep, 0);
     }
-    updateTui();
-    if (!running) {
-        logConsole(Module.ccall('wasm_debug_output', 'string', [], []) + "\n\nProgram execution completed.");
-        stopDebugging();
-    }
+    doStep();
 });
 
 document.getElementById('btn-continue').addEventListener('click', () => {
-    if (!isDebugging) return;
-    let running = true;
-    while (running) {
-        running = Module.ccall('wasm_debug_step', 'number', [], []);
+    if (!isDebugging || isStepping) return;
+    isStepping = true;
+    enableDebugButtons(false);
+
+    function doBatch() {
+        if (!isDebugging) { isStepping = false; return; }
+        const BATCH_SIZE = 1000;
+        for (let i = 0; i < BATCH_SIZE; i++) {
+            const running = Module.ccall('wasm_debug_step', 'number', [], []);
+            if (!running) {
+                isStepping = false;
+                updateTui();
+                logConsole(Module.ccall('wasm_debug_output', 'string', [], []) + "\n\nProgram execution completed.");
+                stopDebugging();
+                return;
+            }
+        }
+        updateTui();
+        setTimeout(doBatch, 0);
     }
-    updateTui();
-    logConsole(Module.ccall('wasm_debug_output', 'string', [], []) + "\n\nProgram execution completed.");
-    stopDebugging();
+    doBatch();
 });
 
 const tabConsole = document.getElementById('tab-console');

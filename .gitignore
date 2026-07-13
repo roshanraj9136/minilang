@@ -13,3 +13,10 @@ temp_transpiled.cpp
 # OS generated files
 .DS_Store
 .directory
+
+# WASM build output
+web/minilang.js
+web/minilang.wasm
+
+# Dependency files
+*.d
