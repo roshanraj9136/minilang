@@ -4,14 +4,14 @@ CXXFLAGS = -Wall -Wextra -std=c++17 -O2 -g
 
 NATIVE_SRC = src/main.cpp src/lexer.cpp src/ast.cpp src/parser.cpp \
              src/semantic.cpp src/codegen.cpp src/opcode.cpp src/vm.cpp \
-             src/disassembler.cpp src/debugger.cpp src/transpiler.cpp
+             src/disassembler.cpp src/debugger.cpp src/transpiler.cpp src/optimizer.cpp
 NATIVE_OBJ = $(NATIVE_SRC:.cpp=.o)
 TARGET = minilang
 
 
 WASM_SRC = src/lexer.cpp src/ast.cpp src/parser.cpp src/semantic.cpp \
            src/codegen.cpp src/opcode.cpp src/vm.cpp src/disassembler.cpp \
-           src/debugger.cpp src/transpiler.cpp src/wasm_api.cpp
+           src/debugger.cpp src/transpiler.cpp src/optimizer.cpp src/wasm_api.cpp
 WASM_TARGET_JS = web/minilang.js
 WASM_TARGET_WASM = web/minilang.wasm
 

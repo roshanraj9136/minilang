@@ -16,6 +16,7 @@
 #include "debugger.h"
 #include "error.h"
 #include "transpiler.h"
+#include "optimizer.h"
 
 std::string read_file(const std::string& path) {
     std::ifstream file(path);
@@ -64,6 +65,7 @@ int compile_and_run(const std::string& source) {
 
     SemanticAnalyzer semantic(errors, source);
     semantic.analyze(ast);
+    Optimizer::optimize(ast);
 
     if (errors.has_errors()) return 1;
 
@@ -103,6 +105,7 @@ int compile_and_debug(const std::string& source) {
 
     SemanticAnalyzer semantic(errors, source);
     semantic.analyze(ast);
+    Optimizer::optimize(ast);
 
     if (errors.has_errors()) return 1;
 
@@ -144,6 +147,7 @@ void dump_bytecode(const std::string& source) {
     std::vector<StmtPtr> ast = parser.parse();
     SemanticAnalyzer semantic(errors, source);
     semantic.analyze(ast);
+    Optimizer::optimize(ast);
     CodeGenerator codegen(errors, source);
     CompiledProgram program = codegen.generate(ast);
     std::cout << Disassembler::disassemble(program);
@@ -212,6 +216,7 @@ int compile_to_native(const std::string& source, const std::string& output_path,
 
     SemanticAnalyzer semantic(errors, source);
     semantic.analyze(ast);
+    Optimizer::optimize(ast);
 
     if (errors.has_errors()) return 1;
 

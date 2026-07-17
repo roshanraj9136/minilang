@@ -14,6 +14,7 @@
 #include "opcode.h"
 #include "vm.h"
 #include "disassembler.h"
+#include "optimizer.h"
 #include <cmath>
 #include <algorithm>
 
@@ -103,6 +104,7 @@ const char* wasm_compile(const char* source_code) {
 
     SemanticAnalyzer semantic(dummy_reporter, last_source);
     semantic.analyze(ast);
+    Optimizer::optimize(ast);
 
     if (dummy_reporter.has_errors()) {
         std::cerr.rdbuf(old_cerr);
