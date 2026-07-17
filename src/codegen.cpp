@@ -434,36 +434,7 @@ void CodeGenerator::generate_expr(const Expr& expr) {
                 current_chunk_->emit_op_with_arg(OpCode::LOAD_GLOBAL, idx, expr.line);
             }
         } else if constexpr (std::is_same_v<T, AssignExpr>) {
-            if (auto var_ref = std::get_if<VarRefExpr>(&arg.lhs->node)) {
-                generate_expr(*arg.value);
-                if (arg.lhs->resolved_type == DataType::FLOAT && arg.value->resolved_type == DataType::INT) {
-                    current_chunk_->emit_op(OpCode::INT_TO_FLOAT, expr.line);
-                }
-                int slot = resolve_local(var_ref->name);
-                if (slot != -1) {
-                    current_chunk_->emit_op_with_arg(OpCode::STORE_LOCAL, slot, expr.line);
-                } else {
-                    int idx = resolve_global(var_ref->name);
-                    current_chunk_->emit_op_with_arg(OpCode::STORE_GLOBAL, idx, expr.line);
-                }
-            } else if (auto unary = std::get_if<UnaryExpr>(&arg.lhs->node)) {
-                if (unary->op == TokenType::STAR) {
-                    generate_expr(*arg.value);
-                    if (arg.lhs->resolved_type == DataType::FLOAT && arg.value->resolved_type == DataType::INT) {
-                        current_chunk_->emit_op(OpCode::INT_TO_FLOAT, expr.line);
-                    }
-                    generate_expr(*unary->operand);
-                    current_chunk_->emit_op(OpCode::STORE_DEREF, expr.line);
-                }
-            } else if (auto array_idx = std::get_if<ArrayIndexExpr>(&arg.lhs->node)) {
-                generate_expr(*array_idx->array);
-                generate_expr(*array_idx->index);
-                generate_expr(*arg.value);
-                if (arg.lhs->resolved_type == DataType::FLOAT && arg.value->resolved_type == DataType::INT) {
-                    current_chunk_->emit_op(OpCode::INT_TO_FLOAT, expr.line);
-                }
-                current_chunk_->emit_op(OpCode::ARRAY_STORE, expr.line);
-            }
+            generate_assign(arg, expr.line);
         } else if constexpr (std::is_same_v<T, BinaryExpr>) {
             generate_binary(arg, expr.line);
         } else if constexpr (std::is_same_v<T, UnaryExpr>) {
@@ -501,164 +472,11 @@ void CodeGenerator::generate_expr(const Expr& expr) {
             generate_expr(*arg.else_expr);
             current_chunk_->patch_jump(end_jump);
         } else if constexpr (std::is_same_v<T, CompoundAssignExpr>) {
-            if (auto var_ref = std::get_if<VarRefExpr>(&arg.target->node)) {
-                int slot = resolve_local(var_ref->name);
-                current_chunk_->emit_op_with_arg(OpCode::LOAD_LOCAL, slot, expr.line);
-                generate_expr(*arg.value);
-                if (arg.target->resolved_type == DataType::FLOAT && arg.value->resolved_type == DataType::INT) {
-                    current_chunk_->emit_op(OpCode::INT_TO_FLOAT, expr.line);
-                }
-                OpCode bin_op;
-                switch (arg.op) {
-                    case TokenType::PLUS_EQUAL: bin_op = OpCode::ADD; break;
-                    case TokenType::MINUS_EQUAL: bin_op = OpCode::SUB; break;
-                    case TokenType::STAR_EQUAL: bin_op = OpCode::MUL; break;
-                    case TokenType::SLASH_EQUAL: bin_op = OpCode::DIV; break;
-                    case TokenType::PERCENT_EQUAL: bin_op = OpCode::MOD; break;
-                    default: bin_op = OpCode::ADD; break;
-                }
-                current_chunk_->emit_op(bin_op, expr.line);
-                current_chunk_->emit_op_with_arg(OpCode::STORE_LOCAL, slot, expr.line);
-            } else if (auto unary = std::get_if<UnaryExpr>(&arg.target->node)) {
-                if (unary->op == TokenType::STAR) {
-                    generate_expr(*unary->operand);
-                    current_chunk_->emit_op(OpCode::LOAD_DEREF, expr.line);
-                    generate_expr(*arg.value);
-                    if (arg.target->resolved_type == DataType::FLOAT && arg.value->resolved_type == DataType::INT) {
-                        current_chunk_->emit_op(OpCode::INT_TO_FLOAT, expr.line);
-                    }
-                    OpCode bin_op;
-                    switch (arg.op) {
-                        case TokenType::PLUS_EQUAL: bin_op = OpCode::ADD; break;
-                        case TokenType::MINUS_EQUAL: bin_op = OpCode::SUB; break;
-                        case TokenType::STAR_EQUAL: bin_op = OpCode::MUL; break;
-                        case TokenType::SLASH_EQUAL: bin_op = OpCode::DIV; break;
-                        case TokenType::PERCENT_EQUAL: bin_op = OpCode::MOD; break;
-                        default: bin_op = OpCode::ADD; break;
-                    }
-                    current_chunk_->emit_op(bin_op, expr.line);
-                    generate_expr(*unary->operand);
-                    current_chunk_->emit_op(OpCode::STORE_DEREF, expr.line);
-                }
-            } else if (auto array_idx = std::get_if<ArrayIndexExpr>(&arg.target->node)) {
-                generate_expr(*array_idx->array);
-                generate_expr(*array_idx->index);
-                generate_expr(*array_idx->array);
-                generate_expr(*array_idx->index);
-                current_chunk_->emit_op(OpCode::ARRAY_LOAD, expr.line);
-                generate_expr(*arg.value);
-                if (arg.target->resolved_type == DataType::FLOAT && arg.value->resolved_type == DataType::INT) {
-                    current_chunk_->emit_op(OpCode::INT_TO_FLOAT, expr.line);
-                }
-                OpCode bin_op;
-                switch (arg.op) {
-                    case TokenType::PLUS_EQUAL: bin_op = OpCode::ADD; break;
-                    case TokenType::MINUS_EQUAL: bin_op = OpCode::SUB; break;
-                    case TokenType::STAR_EQUAL: bin_op = OpCode::MUL; break;
-                    case TokenType::SLASH_EQUAL: bin_op = OpCode::DIV; break;
-                    case TokenType::PERCENT_EQUAL: bin_op = OpCode::MOD; break;
-                    default: bin_op = OpCode::ADD; break;
-                }
-                current_chunk_->emit_op(bin_op, expr.line);
-                current_chunk_->emit_op(OpCode::ARRAY_STORE, expr.line);
-            }
+            generate_compound_assign(arg, expr.line);
         } else if constexpr (std::is_same_v<T, PreUnaryExpr>) {
-            if (auto var_ref = std::get_if<VarRefExpr>(&arg.operand->node)) {
-                int slot = resolve_local(var_ref->name);
-                current_chunk_->emit_op_with_arg(OpCode::LOAD_LOCAL, slot, expr.line);
-                int one_idx = current_chunk_->add_constant(Value::make_int(1));
-                if (arg.operand->resolved_type == DataType::FLOAT) {
-                    int one_f_idx = current_chunk_->add_constant(Value::make_float(1.0));
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, expr.line);
-                } else {
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, expr.line);
-                }
-                current_chunk_->emit_op(arg.op == TokenType::PLUS_PLUS ? OpCode::ADD : OpCode::SUB, expr.line);
-                current_chunk_->emit_op_with_arg(OpCode::STORE_LOCAL, slot, expr.line);
-            } else if (auto unary = std::get_if<UnaryExpr>(&arg.operand->node)) {
-                if (unary->op == TokenType::STAR) {
-                    generate_expr(*unary->operand);
-                    current_chunk_->emit_op(OpCode::LOAD_DEREF, expr.line);
-                    int one_idx = current_chunk_->add_constant(Value::make_int(1));
-                    if (arg.operand->resolved_type == DataType::FLOAT) {
-                        int one_f_idx = current_chunk_->add_constant(Value::make_float(1.0));
-                        current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, expr.line);
-                    } else {
-                        current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, expr.line);
-                    }
-                    current_chunk_->emit_op(arg.op == TokenType::PLUS_PLUS ? OpCode::ADD : OpCode::SUB, expr.line);
-                    generate_expr(*unary->operand);
-                    current_chunk_->emit_op(OpCode::STORE_DEREF, expr.line);
-                }
-            } else if (auto array_idx = std::get_if<ArrayIndexExpr>(&arg.operand->node)) {
-                generate_expr(*array_idx->array);
-                generate_expr(*array_idx->index);
-                generate_expr(*array_idx->array);
-                generate_expr(*array_idx->index);
-                current_chunk_->emit_op(OpCode::ARRAY_LOAD, expr.line);
-                int one_idx = current_chunk_->add_constant(Value::make_int(1));
-                if (arg.operand->resolved_type == DataType::FLOAT) {
-                    int one_f_idx = current_chunk_->add_constant(Value::make_float(1.0));
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, expr.line);
-                } else {
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, expr.line);
-                }
-                current_chunk_->emit_op(arg.op == TokenType::PLUS_PLUS ? OpCode::ADD : OpCode::SUB, expr.line);
-                current_chunk_->emit_op(OpCode::ARRAY_STORE, expr.line);
-            }
+            generate_pre_unary(arg, expr.line);
         } else if constexpr (std::is_same_v<T, PostUnaryExpr>) {
-            if (auto var_ref = std::get_if<VarRefExpr>(&arg.operand->node)) {
-                int slot = resolve_local(var_ref->name);
-                current_chunk_->emit_op_with_arg(OpCode::LOAD_LOCAL, slot, expr.line);
-                current_chunk_->emit_op_with_arg(OpCode::LOAD_LOCAL, slot, expr.line);
-                int one_idx = current_chunk_->add_constant(Value::make_int(1));
-                if (arg.operand->resolved_type == DataType::FLOAT) {
-                    int one_f_idx = current_chunk_->add_constant(Value::make_float(1.0));
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, expr.line);
-                } else {
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, expr.line);
-                }
-                current_chunk_->emit_op(arg.op == TokenType::PLUS_PLUS ? OpCode::ADD : OpCode::SUB, expr.line);
-                current_chunk_->emit_op_with_arg(OpCode::STORE_LOCAL, slot, expr.line);
-                current_chunk_->emit_op(OpCode::POP, expr.line);
-            } else if (auto unary = std::get_if<UnaryExpr>(&arg.operand->node)) {
-                if (unary->op == TokenType::STAR) {
-                    generate_expr(*unary->operand);
-                    current_chunk_->emit_op(OpCode::LOAD_DEREF, expr.line);
-                    generate_expr(*unary->operand);
-                    current_chunk_->emit_op(OpCode::LOAD_DEREF, expr.line);
-                    int one_idx = current_chunk_->add_constant(Value::make_int(1));
-                    if (arg.operand->resolved_type == DataType::FLOAT) {
-                        int one_f_idx = current_chunk_->add_constant(Value::make_float(1.0));
-                        current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, expr.line);
-                    } else {
-                        current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, expr.line);
-                    }
-                    current_chunk_->emit_op(arg.op == TokenType::PLUS_PLUS ? OpCode::ADD : OpCode::SUB, expr.line);
-                    generate_expr(*unary->operand);
-                    current_chunk_->emit_op(OpCode::STORE_DEREF, expr.line);
-                    current_chunk_->emit_op(OpCode::POP, expr.line);
-                }
-            } else if (auto array_idx = std::get_if<ArrayIndexExpr>(&arg.operand->node)) {
-                generate_expr(*array_idx->array);
-                generate_expr(*array_idx->index);
-                current_chunk_->emit_op(OpCode::ARRAY_LOAD, expr.line);
-                generate_expr(*array_idx->array);
-                generate_expr(*array_idx->index);
-                generate_expr(*array_idx->array);
-                generate_expr(*array_idx->index);
-                current_chunk_->emit_op(OpCode::ARRAY_LOAD, expr.line);
-                int one_idx = current_chunk_->add_constant(Value::make_int(1));
-                if (arg.operand->resolved_type == DataType::FLOAT) {
-                    int one_f_idx = current_chunk_->add_constant(Value::make_float(1.0));
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, expr.line);
-                } else {
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, expr.line);
-                }
-                current_chunk_->emit_op(arg.op == TokenType::PLUS_PLUS ? OpCode::ADD : OpCode::SUB, expr.line);
-                current_chunk_->emit_op(OpCode::ARRAY_STORE, expr.line);
-                current_chunk_->emit_op(OpCode::POP, expr.line);
-            }
+            generate_post_unary(arg, expr.line);
         } else if constexpr (std::is_same_v<T, NullExpr>) {
             current_chunk_->emit_op(OpCode::PUSH_NULL, expr.line);
         } else if constexpr (std::is_same_v<T, SizeofExpr>) {
@@ -673,102 +491,9 @@ void CodeGenerator::generate_expr(const Expr& expr) {
             int idx = current_chunk_->add_constant(Value::make_string(t_name));
             current_chunk_->emit_op_with_arg(OpCode::PUSH_STRING, idx, expr.line);
         } else if constexpr (std::is_same_v<T, ConstructorExpr>) {
-            bool is_vector = (arg.type == DataType::VECTOR_INT || arg.type == DataType::VECTOR_FLOAT ||
-                              arg.type == DataType::VECTOR_BOOL || arg.type == DataType::VECTOR_STRING ||
-                              arg.type == DataType::VECTOR_PAIR_INT_INT || arg.type == DataType::VECTOR_VECTOR_INT ||
-                              arg.type == DataType::VECTOR_VECTOR_PAIR_INT_INT);
-            bool is_pair = (arg.type == DataType::PAIR_INT_INT);
-            bool is_queue = (arg.type == DataType::QUEUE_INT || arg.type == DataType::QUEUE_PAIR_INT_INT);
-            bool is_stack = (arg.type == DataType::STACK_INT);
-
-            if (is_vector) {
-                uint8_t type_code = 0;
-                DataType elem = get_element_type(arg.type);
-                if (elem == DataType::FLOAT) type_code = 1;
-                else if (elem == DataType::BOOL) type_code = 2;
-                else if (elem == DataType::STRING) type_code = 3;
-
-                if (arg.args.empty()) {
-                    int idx = current_chunk_->add_constant(Value::make_int(0));
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, idx, expr.line);
-                    current_chunk_->emit_op(OpCode::NEW_ARRAY, expr.line);
-                    current_chunk_->emit_byte(type_code, expr.line);
-                } else {
-                    generate_expr(*arg.args[0]);
-                    current_chunk_->emit_op(OpCode::NEW_ARRAY, expr.line);
-                    current_chunk_->emit_byte(type_code, expr.line);
-                    if (arg.args.size() > 1) {
-                        generate_expr(*arg.args[1]);
-                        current_chunk_->emit_op(OpCode::FILL_ARRAY, expr.line);
-                    }
-                }
-            } else if (is_pair) {
-                if (arg.args.empty()) {
-                    int idx = current_chunk_->add_constant(Value::make_int(0));
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, idx, expr.line);
-                    current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, idx, expr.line);
-                    current_chunk_->emit_op(OpCode::NEW_PAIR, expr.line);
-                } else {
-                    generate_expr(*arg.args[0]);
-                    generate_expr(*arg.args[1]);
-                    current_chunk_->emit_op(OpCode::NEW_PAIR, expr.line);
-                }
-            } else if (is_queue || is_stack) {
-                int idx = current_chunk_->add_constant(Value::make_int(0));
-                current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, idx, expr.line);
-                current_chunk_->emit_op(OpCode::NEW_ARRAY, expr.line);
-                current_chunk_->emit_byte(0, expr.line);
-            }
+            generate_constructor(arg, expr.line);
         } else if constexpr (std::is_same_v<T, MethodCallExpr>) {
-            generate_expr(*arg.object);
-            DataType obj_type = arg.object->resolved_type;
-            bool is_vector = (obj_type == DataType::VECTOR_INT || obj_type == DataType::VECTOR_FLOAT ||
-                              obj_type == DataType::VECTOR_BOOL || obj_type == DataType::VECTOR_STRING ||
-                              obj_type == DataType::VECTOR_PAIR_INT_INT || obj_type == DataType::VECTOR_VECTOR_INT ||
-                              obj_type == DataType::VECTOR_VECTOR_PAIR_INT_INT);
-            bool is_queue = (obj_type == DataType::QUEUE_INT || obj_type == DataType::QUEUE_PAIR_INT_INT);
-            bool is_stack = (obj_type == DataType::STACK_INT);
-
-            if (is_vector) {
-                if (arg.method == "push_back") {
-                    generate_expr(*arg.args[0]);
-                    current_chunk_->emit_op(OpCode::VECTOR_PUSH_BACK, expr.line);
-                } else if (arg.method == "pop_back") {
-                    current_chunk_->emit_op(OpCode::VECTOR_POP_BACK, expr.line);
-                } else if (arg.method == "size") {
-                    current_chunk_->emit_op(OpCode::ARRAY_LENGTH, expr.line);
-                } else if (arg.method == "empty") {
-                    current_chunk_->emit_op(OpCode::CONTAINER_EMPTY, expr.line);
-                } else if (arg.method == "clear") {
-                    current_chunk_->emit_op(OpCode::CONTAINER_CLEAR, expr.line);
-                }
-            } else if (is_queue) {
-                if (arg.method == "push") {
-                    generate_expr(*arg.args[0]);
-                    current_chunk_->emit_op(OpCode::VECTOR_PUSH_BACK, expr.line);
-                } else if (arg.method == "pop") {
-                    current_chunk_->emit_op(OpCode::QUEUE_POP, expr.line);
-                } else if (arg.method == "front") {
-                    current_chunk_->emit_op(OpCode::QUEUE_FRONT, expr.line);
-                } else if (arg.method == "size") {
-                    current_chunk_->emit_op(OpCode::ARRAY_LENGTH, expr.line);
-                } else if (arg.method == "empty") {
-                    current_chunk_->emit_op(OpCode::CONTAINER_EMPTY, expr.line);
-                }
-            } else if (is_stack) {
-                if (arg.method == "push") {
-                    generate_expr(*arg.args[0]);
-                    current_chunk_->emit_op(OpCode::VECTOR_PUSH_BACK, expr.line);
-                } else if (arg.method == "pop") {
-                    current_chunk_->emit_op(OpCode::VECTOR_POP_BACK, expr.line);
-                } else if (arg.method == "top") {
-                    current_chunk_->emit_op(OpCode::STACK_TOP, expr.line);
-                } else if (arg.method == "size") {
-                    current_chunk_->emit_op(OpCode::ARRAY_LENGTH, expr.line);
-                } else if (arg.method == "empty") {
-                    current_chunk_->emit_op(OpCode::CONTAINER_EMPTY, expr.line);
-                }
-            }
+            generate_method_call(arg, expr.line);
         } else if constexpr (std::is_same_v<T, MemberAccessExpr>) {
             generate_expr(*arg.object);
             int idx_val = (arg.member == "first") ? 0 : 1;
@@ -864,4 +589,294 @@ void CodeGenerator::generate_call(const CallExpr& expr, int line) {
     current_chunk_->emit_byte((fn_idx >> 8) & 0xFF, line);
     current_chunk_->emit_byte(fn_idx & 0xFF, line);
     current_chunk_->emit_byte(argc & 0xFF, line);
+}
+
+OpCode CodeGenerator::compound_assign_op(TokenType op) {
+    // Map our compound operators back to the basic arithmetic ones.
+    switch (op) {
+        case TokenType::PLUS_EQUAL: return OpCode::ADD;
+        case TokenType::MINUS_EQUAL: return OpCode::SUB;
+        case TokenType::STAR_EQUAL: return OpCode::MUL;
+        case TokenType::SLASH_EQUAL: return OpCode::DIV;
+        case TokenType::PERCENT_EQUAL: return OpCode::MOD;
+        default: return OpCode::ADD; // Just in case
+    }
+}
+
+void CodeGenerator::generate_assign(const AssignExpr& expr, int line) {
+    // We can assign to a variable, a pointer, or an array element.
+    if (auto var_ref = std::get_if<VarRefExpr>(&expr.lhs->node)) {
+        generate_expr(*expr.value);
+        if (expr.lhs->resolved_type == DataType::FLOAT && expr.value->resolved_type == DataType::INT) {
+            current_chunk_->emit_op(OpCode::INT_TO_FLOAT, line);
+        }
+        int slot = resolve_local(var_ref->name);
+        if (slot != -1) {
+            current_chunk_->emit_op_with_arg(OpCode::STORE_LOCAL, slot, line);
+        } else {
+            int idx = resolve_global(var_ref->name);
+            current_chunk_->emit_op_with_arg(OpCode::STORE_GLOBAL, idx, line);
+        }
+    } else if (auto unary = std::get_if<UnaryExpr>(&expr.lhs->node)) {
+        // Pointer assignment! e.g. *ptr = val;
+        if (unary->op == TokenType::STAR) {
+            generate_expr(*expr.value);
+            if (expr.lhs->resolved_type == DataType::FLOAT && expr.value->resolved_type == DataType::INT) {
+                current_chunk_->emit_op(OpCode::INT_TO_FLOAT, line);
+            }
+            generate_expr(*unary->operand);
+            current_chunk_->emit_op(OpCode::STORE_DEREF, line);
+        }
+    } else if (auto array_idx = std::get_if<ArrayIndexExpr>(&expr.lhs->node)) {
+        // Array index assignment! e.g. arr[i] = val;
+        generate_expr(*array_idx->array);
+        generate_expr(*array_idx->index);
+        generate_expr(*expr.value);
+        if (expr.lhs->resolved_type == DataType::FLOAT && expr.value->resolved_type == DataType::INT) {
+            current_chunk_->emit_op(OpCode::INT_TO_FLOAT, line);
+        }
+        current_chunk_->emit_op(OpCode::ARRAY_STORE, line);
+    }
+}
+
+void CodeGenerator::generate_compound_assign(const CompoundAssignExpr& expr, int line) {
+    // E.g. x += y
+    OpCode bin_op = compound_assign_op(expr.op);
+    
+    if (auto var_ref = std::get_if<VarRefExpr>(&expr.target->node)) {
+        int slot = resolve_local(var_ref->name);
+        current_chunk_->emit_op_with_arg(OpCode::LOAD_LOCAL, slot, line);
+        generate_expr(*expr.value);
+        if (expr.target->resolved_type == DataType::FLOAT && expr.value->resolved_type == DataType::INT) {
+            current_chunk_->emit_op(OpCode::INT_TO_FLOAT, line);
+        }
+        current_chunk_->emit_op(bin_op, line);
+        current_chunk_->emit_op_with_arg(OpCode::STORE_LOCAL, slot, line);
+    } else if (auto unary = std::get_if<UnaryExpr>(&expr.target->node)) {
+        if (unary->op == TokenType::STAR) {
+            generate_expr(*unary->operand);
+            current_chunk_->emit_op(OpCode::LOAD_DEREF, line);
+            generate_expr(*expr.value);
+            if (expr.target->resolved_type == DataType::FLOAT && expr.value->resolved_type == DataType::INT) {
+                current_chunk_->emit_op(OpCode::INT_TO_FLOAT, line);
+            }
+            current_chunk_->emit_op(bin_op, line);
+            generate_expr(*unary->operand);
+            current_chunk_->emit_op(OpCode::STORE_DEREF, line);
+        }
+    } else if (auto array_idx = std::get_if<ArrayIndexExpr>(&expr.target->node)) {
+        generate_expr(*array_idx->array);
+        generate_expr(*array_idx->index);
+        generate_expr(*array_idx->array);
+        generate_expr(*array_idx->index);
+        current_chunk_->emit_op(OpCode::ARRAY_LOAD, line);
+        generate_expr(*expr.value);
+        if (expr.target->resolved_type == DataType::FLOAT && expr.value->resolved_type == DataType::INT) {
+            current_chunk_->emit_op(OpCode::INT_TO_FLOAT, line);
+        }
+        current_chunk_->emit_op(bin_op, line);
+        current_chunk_->emit_op(OpCode::ARRAY_STORE, line);
+    }
+}
+
+void CodeGenerator::generate_pre_unary(const PreUnaryExpr& expr, int line) {
+    // E.g. ++x. Increment the value and then return it.
+    int one_idx = current_chunk_->add_constant(Value::make_int(1));
+    int one_f_idx = current_chunk_->add_constant(Value::make_float(1.0));
+    OpCode bin_op = (expr.op == TokenType::PLUS_PLUS) ? OpCode::ADD : OpCode::SUB;
+
+    if (auto var_ref = std::get_if<VarRefExpr>(&expr.operand->node)) {
+        int slot = resolve_local(var_ref->name);
+        current_chunk_->emit_op_with_arg(OpCode::LOAD_LOCAL, slot, line);
+        if (expr.operand->resolved_type == DataType::FLOAT) {
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, line);
+        } else {
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, line);
+        }
+        current_chunk_->emit_op(bin_op, line);
+        current_chunk_->emit_op_with_arg(OpCode::STORE_LOCAL, slot, line);
+    } else if (auto unary = std::get_if<UnaryExpr>(&expr.operand->node)) {
+        if (unary->op == TokenType::STAR) {
+            generate_expr(*unary->operand);
+            current_chunk_->emit_op(OpCode::LOAD_DEREF, line);
+            if (expr.operand->resolved_type == DataType::FLOAT) {
+                current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, line);
+            } else {
+                current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, line);
+            }
+            current_chunk_->emit_op(bin_op, line);
+            generate_expr(*unary->operand);
+            current_chunk_->emit_op(OpCode::STORE_DEREF, line);
+        }
+    } else if (auto array_idx = std::get_if<ArrayIndexExpr>(&expr.operand->node)) {
+        generate_expr(*array_idx->array);
+        generate_expr(*array_idx->index);
+        generate_expr(*array_idx->array);
+        generate_expr(*array_idx->index);
+        current_chunk_->emit_op(OpCode::ARRAY_LOAD, line);
+        if (expr.operand->resolved_type == DataType::FLOAT) {
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, line);
+        } else {
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, line);
+        }
+        current_chunk_->emit_op(bin_op, line);
+        current_chunk_->emit_op(OpCode::ARRAY_STORE, line);
+    }
+}
+
+void CodeGenerator::generate_post_unary(const PostUnaryExpr& expr, int line) {
+    // E.g. x++. Return the old value, but increment the storage behind the scenes.
+    int one_idx = current_chunk_->add_constant(Value::make_int(1));
+    int one_f_idx = current_chunk_->add_constant(Value::make_float(1.0));
+    OpCode bin_op = (expr.op == TokenType::PLUS_PLUS) ? OpCode::ADD : OpCode::SUB;
+
+    if (auto var_ref = std::get_if<VarRefExpr>(&expr.operand->node)) {
+        int slot = resolve_local(var_ref->name);
+        current_chunk_->emit_op_with_arg(OpCode::LOAD_LOCAL, slot, line);
+        current_chunk_->emit_op_with_arg(OpCode::LOAD_LOCAL, slot, line);
+        if (expr.operand->resolved_type == DataType::FLOAT) {
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, line);
+        } else {
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, line);
+        }
+        current_chunk_->emit_op(bin_op, line);
+        current_chunk_->emit_op_with_arg(OpCode::STORE_LOCAL, slot, line);
+        current_chunk_->emit_op(OpCode::POP, line);
+    } else if (auto unary = std::get_if<UnaryExpr>(&expr.operand->node)) {
+        if (unary->op == TokenType::STAR) {
+            generate_expr(*unary->operand);
+            current_chunk_->emit_op(OpCode::LOAD_DEREF, line);
+            generate_expr(*unary->operand);
+            current_chunk_->emit_op(OpCode::LOAD_DEREF, line);
+            if (expr.operand->resolved_type == DataType::FLOAT) {
+                current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, line);
+            } else {
+                current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, line);
+            }
+            current_chunk_->emit_op(bin_op, line);
+            generate_expr(*unary->operand);
+            current_chunk_->emit_op(OpCode::STORE_DEREF, line);
+            current_chunk_->emit_op(OpCode::POP, line);
+        }
+    } else if (auto array_idx = std::get_if<ArrayIndexExpr>(&expr.operand->node)) {
+        generate_expr(*array_idx->array);
+        generate_expr(*array_idx->index);
+        current_chunk_->emit_op(OpCode::ARRAY_LOAD, line);
+        generate_expr(*array_idx->array);
+        generate_expr(*array_idx->index);
+        generate_expr(*array_idx->array);
+        generate_expr(*array_idx->index);
+        current_chunk_->emit_op(OpCode::ARRAY_LOAD, line);
+        if (expr.operand->resolved_type == DataType::FLOAT) {
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_FLOAT, one_f_idx, line);
+        } else {
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, one_idx, line);
+        }
+        current_chunk_->emit_op(bin_op, line);
+        current_chunk_->emit_op(OpCode::ARRAY_STORE, line);
+        current_chunk_->emit_op(OpCode::POP, line);
+    }
+}
+
+void CodeGenerator::generate_constructor(const ConstructorExpr& expr, int line) {
+    // Handles constructing vectors, pairs, queues, and stacks.
+    bool is_vector = (expr.type == DataType::VECTOR_INT || expr.type == DataType::VECTOR_FLOAT ||
+                      expr.type == DataType::VECTOR_BOOL || expr.type == DataType::VECTOR_STRING ||
+                      expr.type == DataType::VECTOR_PAIR_INT_INT || expr.type == DataType::VECTOR_VECTOR_INT ||
+                      expr.type == DataType::VECTOR_VECTOR_PAIR_INT_INT);
+    bool is_pair = (expr.type == DataType::PAIR_INT_INT);
+    bool is_queue = (expr.type == DataType::QUEUE_INT || expr.type == DataType::QUEUE_PAIR_INT_INT);
+    bool is_stack = (expr.type == DataType::STACK_INT);
+
+    if (is_vector) {
+        uint8_t type_code = 0;
+        DataType elem = get_element_type(expr.type);
+        if (elem == DataType::FLOAT) type_code = 1;
+        else if (elem == DataType::BOOL) type_code = 2;
+        else if (elem == DataType::STRING) type_code = 3;
+
+        if (expr.args.empty()) {
+            int idx = current_chunk_->add_constant(Value::make_int(0));
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, idx, line);
+            current_chunk_->emit_op(OpCode::NEW_ARRAY, line);
+            current_chunk_->emit_byte(type_code, line);
+        } else {
+            generate_expr(*expr.args[0]);
+            current_chunk_->emit_op(OpCode::NEW_ARRAY, line);
+            current_chunk_->emit_byte(type_code, line);
+            if (expr.args.size() > 1) {
+                generate_expr(*expr.args[1]);
+                current_chunk_->emit_op(OpCode::FILL_ARRAY, line);
+            }
+        }
+    } else if (is_pair) {
+        if (expr.args.empty()) {
+            int idx = current_chunk_->add_constant(Value::make_int(0));
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, idx, line);
+            current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, idx, line);
+            current_chunk_->emit_op(OpCode::NEW_PAIR, line);
+        } else {
+            generate_expr(*expr.args[0]);
+            generate_expr(*expr.args[1]);
+            current_chunk_->emit_op(OpCode::NEW_PAIR, line);
+        }
+    } else if (is_queue || is_stack) {
+        int idx = current_chunk_->add_constant(Value::make_int(0));
+        current_chunk_->emit_op_with_arg(OpCode::PUSH_INT, idx, line);
+        current_chunk_->emit_op(OpCode::NEW_ARRAY, line);
+        current_chunk_->emit_byte(0, line);
+    }
+}
+
+void CodeGenerator::generate_method_call(const MethodCallExpr& expr, int line) {
+    // Generate the receiver object expression
+    generate_expr(*expr.object);
+    DataType obj_type = expr.object->resolved_type;
+    bool is_vector = (obj_type == DataType::VECTOR_INT || obj_type == DataType::VECTOR_FLOAT ||
+                      obj_type == DataType::VECTOR_BOOL || obj_type == DataType::VECTOR_STRING ||
+                      obj_type == DataType::VECTOR_PAIR_INT_INT || obj_type == DataType::VECTOR_VECTOR_INT ||
+                      obj_type == DataType::VECTOR_VECTOR_PAIR_INT_INT);
+    bool is_queue = (obj_type == DataType::QUEUE_INT || obj_type == DataType::QUEUE_PAIR_INT_INT);
+    bool is_stack = (obj_type == DataType::STACK_INT);
+
+    if (is_vector) {
+        if (expr.method == "push_back") {
+            generate_expr(*expr.args[0]);
+            current_chunk_->emit_op(OpCode::VECTOR_PUSH_BACK, line);
+        } else if (expr.method == "pop_back") {
+            current_chunk_->emit_op(OpCode::VECTOR_POP_BACK, line);
+        } else if (expr.method == "size") {
+            current_chunk_->emit_op(OpCode::ARRAY_LENGTH, line);
+        } else if (expr.method == "empty") {
+            current_chunk_->emit_op(OpCode::CONTAINER_EMPTY, line);
+        } else if (expr.method == "clear") {
+            current_chunk_->emit_op(OpCode::CONTAINER_CLEAR, line);
+        }
+    } else if (is_queue) {
+        if (expr.method == "push") {
+            generate_expr(*expr.args[0]);
+            current_chunk_->emit_op(OpCode::VECTOR_PUSH_BACK, line);
+        } else if (expr.method == "pop") {
+            current_chunk_->emit_op(OpCode::QUEUE_POP, line);
+        } else if (expr.method == "front") {
+            current_chunk_->emit_op(OpCode::QUEUE_FRONT, line);
+        } else if (expr.method == "size") {
+            current_chunk_->emit_op(OpCode::ARRAY_LENGTH, line);
+        } else if (expr.method == "empty") {
+            current_chunk_->emit_op(OpCode::CONTAINER_EMPTY, line);
+        }
+    } else if (is_stack) {
+        if (expr.method == "push") {
+            generate_expr(*expr.args[0]);
+            current_chunk_->emit_op(OpCode::VECTOR_PUSH_BACK, line);
+        } else if (expr.method == "pop") {
+            current_chunk_->emit_op(OpCode::VECTOR_POP_BACK, line);
+        } else if (expr.method == "top") {
+            current_chunk_->emit_op(OpCode::STACK_TOP, line);
+        } else if (expr.method == "size") {
+            current_chunk_->emit_op(OpCode::ARRAY_LENGTH, line);
+        } else if (expr.method == "empty") {
+            current_chunk_->emit_op(OpCode::CONTAINER_EMPTY, line);
+        }
+    }
 }

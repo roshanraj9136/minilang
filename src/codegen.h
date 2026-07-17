@@ -56,6 +56,13 @@ private:
     void generate_binary(const BinaryExpr& expr, int line);
     void generate_unary(const UnaryExpr& expr, int line);
     void generate_call(const CallExpr& expr, int line);
+    void generate_assign(const AssignExpr& expr, int line);
+    void generate_compound_assign(const CompoundAssignExpr& expr, int line);
+    void generate_pre_unary(const PreUnaryExpr& expr, int line);
+    void generate_post_unary(const PostUnaryExpr& expr, int line);
+    void generate_constructor(const ConstructorExpr& expr, int line);
+    void generate_method_call(const MethodCallExpr& expr, int line);
+    OpCode compound_assign_op(TokenType op);
 
     int resolve_local(const std::string& name);
     int resolve_global(const std::string& name);

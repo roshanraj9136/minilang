@@ -13,14 +13,11 @@ public:
 
 private:
     std::string source_;
-    CompiledProgram program_;
-    std::vector<Value> stack_;
-    std::vector<Value> globals_;
-    std::vector<CallFrame> call_frames_;
+    VM vm_; // The actual VM we are stepping through!
     std::set<int> breakpoints_;
     bool stepping_;
-    std::string output_log_;
 
+    // Screen/TUI rendering logic
     void render();
     void render_box(int row, int col, int height, int width, const std::string& title);
     void render_source_panel(int row, int col, int height, int width);
@@ -31,14 +28,8 @@ private:
     void move_cursor(int row, int col);
     void clear_screen();
 
+    // Debugger control helpers
     bool execute_one_instruction();
-    uint8_t read_byte();
-    uint16_t read_short();
-    Value pop();
-    const Value& peek_stack() const;
-    void push(const Value& value);
-    Chunk& current_chunk();
-    CallFrame& current_frame();
     int current_source_line();
     std::string current_fn_name();
 };
