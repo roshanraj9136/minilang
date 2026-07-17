@@ -76,9 +76,29 @@ public:
                 }
             } else if constexpr (std::is_same_v<T, BlockStmt>) {
                 push_scope();
+                std::vector<StmtPtr> optimized_stmts;
                 for (auto& s : arg.statements) {
-                    if (s) optimize_stmt(*s);
+                    if (!s) continue;
+                    optimize_stmt(*s);
+                    
+                    // Skip empty block statements
+                    if (auto block = std::get_if<BlockStmt>(&s->node)) {
+                        if (block->statements.empty()) {
+                            continue;
+                        }
+                    }
+                    
+                    optimized_stmts.push_back(std::move(s));
+                    
+                    // If we see a terminating statement (Return, Break, Continue),
+                    // subsequent statements in this block are unreachable!
+                    if (std::holds_alternative<ReturnStmt>(optimized_stmts.back()->node) ||
+                        std::holds_alternative<BreakStmt>(optimized_stmts.back()->node) ||
+                        std::holds_alternative<ContinueStmt>(optimized_stmts.back()->node)) {
+                        break;
+                    }
                 }
+                arg.statements = std::move(optimized_stmts);
                 pop_scope();
             } else if constexpr (std::is_same_v<T, IfStmt>) {
                 arg.condition = optimize_expr(std::move(arg.condition));
@@ -129,6 +149,26 @@ public:
                 }
             }
         }, stmt.node);
+
+        // Dead Code Elimination post-passes (safe from variant self-mutation bugs)
+        if (auto if_stmt = std::get_if<IfStmt>(&stmt.node)) {
+            if (if_stmt->condition && std::holds_alternative<LiteralBoolExpr>(if_stmt->condition->node)) {
+                bool cond_val = std::get<LiteralBoolExpr>(if_stmt->condition->node).value;
+                StmtPtr branch = std::move(cond_val ? if_stmt->then_branch : if_stmt->else_branch);
+                if (branch) {
+                    stmt = std::move(*branch);
+                } else {
+                    stmt.node = BlockStmt{std::vector<StmtPtr>{}};
+                }
+            }
+        } else if (auto while_stmt = std::get_if<WhileStmt>(&stmt.node)) {
+            if (while_stmt->condition && std::holds_alternative<LiteralBoolExpr>(while_stmt->condition->node)) {
+                bool cond_val = std::get<LiteralBoolExpr>(while_stmt->condition->node).value;
+                if (!cond_val) {
+                    stmt.node = BlockStmt{std::vector<StmtPtr>{}};
+                }
+            }
+        }
     }
 
     ExprPtr optimize_expr(ExprPtr expr) {
