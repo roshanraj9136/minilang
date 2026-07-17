@@ -27,6 +27,7 @@ enum class DataType {
 };
 
 std::string data_type_to_string(DataType type);
+DataType get_element_type(DataType type);
 
 struct Expr;
 struct Stmt;

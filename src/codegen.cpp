@@ -400,16 +400,7 @@ int CodeGenerator::resolve_local(const std::string& name) {
     return -1;
 }
 
-static DataType get_element_type(DataType t) {
-    if (t == DataType::VECTOR_INT || t == DataType::QUEUE_INT || t == DataType::STACK_INT) return DataType::INT;
-    if (t == DataType::VECTOR_FLOAT) return DataType::FLOAT;
-    if (t == DataType::VECTOR_BOOL) return DataType::BOOL;
-    if (t == DataType::VECTOR_STRING) return DataType::STRING;
-    if (t == DataType::VECTOR_PAIR_INT_INT || t == DataType::QUEUE_PAIR_INT_INT) return DataType::PAIR_INT_INT;
-    if (t == DataType::VECTOR_VECTOR_INT) return DataType::VECTOR_INT;
-    if (t == DataType::VECTOR_VECTOR_PAIR_INT_INT) return DataType::PAIR_INT_INT;
-    return DataType::UNKNOWN;
-}
+
 
 void CodeGenerator::generate_expr(const Expr& expr) {
     std::visit([&](auto&& arg) {
