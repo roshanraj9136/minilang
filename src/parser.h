@@ -17,6 +17,7 @@ private:
     bool allow_shift_operators_ = true;
     bool split_greater_greater_ = false;
     bool allow_split_greater_greater_ = false;
+    mutable Token mock_greater_{TokenType::GREATER, ">", 0, 0};
 
     const Token& peek() const;
     const Token& previous() const;

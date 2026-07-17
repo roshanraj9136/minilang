@@ -56,11 +56,10 @@ std::vector<StmtPtr> Parser::parse() {
 
 const Token& Parser::peek() const {
     if (split_greater_greater_) {
-        static Token mock_greater{TokenType::GREATER, ">", 0, 0};
         const Token& real = tokens_[current_];
-        mock_greater.line = real.line;
-        mock_greater.column = real.column;
-        return mock_greater;
+        mock_greater_.line = real.line;
+        mock_greater_.column = real.column;
+        return mock_greater_;
     }
     return tokens_[current_];
 }
