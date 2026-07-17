@@ -182,6 +182,10 @@ VMStepResult VM::step() {
         case OpCode::MOD: {
             Value b = pop();
             Value a = pop();
+            if (!a.is_int() || !b.is_int()) {
+                runtime_error("invalid operands for MOD (must be integers)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             if (b.as_int() == 0) {
                 runtime_error("division by zero");
                 return VMStepResult::RUNTIME_ERROR;
@@ -295,18 +299,30 @@ VMStepResult VM::step() {
         }
         case OpCode::NOT: {
             Value a = pop();
+            if (!a.is_bool()) {
+                runtime_error("invalid operand for NOT (must be boolean)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_bool(!a.as_bool()));
             break;
         }
         case OpCode::AND: {
             Value b = pop();
             Value a = pop();
+            if (!a.is_bool() || !b.is_bool()) {
+                runtime_error("invalid operands for AND (must be booleans)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_bool(a.as_bool() && b.as_bool()));
             break;
         }
         case OpCode::OR: {
             Value b = pop();
             Value a = pop();
+            if (!a.is_bool() || !b.is_bool()) {
+                runtime_error("invalid operands for OR (must be booleans)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_bool(a.as_bool() || b.as_bool()));
             break;
         }
@@ -358,6 +374,10 @@ VMStepResult VM::step() {
         case OpCode::NEW_ARRAY: {
             uint8_t type_code = read_byte();
             Value size_val = pop();
+            if (!size_val.is_int()) {
+                runtime_error("Array size must be an integer");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             int64_t size = size_val.as_int();
             if (size < 0) {
                 runtime_error("Array size cannot be negative");
@@ -376,6 +396,10 @@ VMStepResult VM::step() {
         case OpCode::ARRAY_LOAD: {
             Value idx_val = pop();
             Value arr_val = pop();
+            if (!idx_val.is_int()) {
+                runtime_error("Array index must be an integer");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             if (arr_val.is_string()) {
                 int64_t index = idx_val.as_int();
                 const std::string& s = arr_val.as_string();
@@ -403,6 +427,10 @@ VMStepResult VM::step() {
             Value val = pop();
             Value idx_val = pop();
             Value arr_val = pop();
+            if (!idx_val.is_int()) {
+                runtime_error("Array index must be an integer");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             if (!arr_val.is_array()) {
                 runtime_error("Expected array for element store");
                 return VMStepResult::RUNTIME_ERROR;
@@ -432,46 +460,78 @@ VMStepResult VM::step() {
         }
         case OpCode::INT_TO_FLOAT: {
             Value val = pop();
+            if (!val.is_int()) {
+                runtime_error("invalid operand for INT_TO_FLOAT (must be integer)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_float(static_cast<double>(val.as_int())));
             break;
         }
         case OpCode::FLOAT_TO_INT: {
             Value val = pop();
+            if (!val.is_float()) {
+                runtime_error("invalid operand for FLOAT_TO_INT (must be float)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_int(static_cast<int64_t>(val.as_float())));
             break;
         }
         case OpCode::BIT_AND: {
             Value b = pop();
             Value a = pop();
+            if (!a.is_int() || !b.is_int()) {
+                runtime_error("invalid operands for BIT_AND (must be integers)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_int(a.as_int() & b.as_int()));
             break;
         }
         case OpCode::BIT_OR: {
             Value b = pop();
             Value a = pop();
+            if (!a.is_int() || !b.is_int()) {
+                runtime_error("invalid operands for BIT_OR (must be integers)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_int(a.as_int() | b.as_int()));
             break;
         }
         case OpCode::BIT_XOR: {
             Value b = pop();
             Value a = pop();
+            if (!a.is_int() || !b.is_int()) {
+                runtime_error("invalid operands for BIT_XOR (must be integers)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_int(a.as_int() ^ b.as_int()));
             break;
         }
         case OpCode::BIT_NOT: {
             Value val = pop();
+            if (!val.is_int()) {
+                runtime_error("invalid operand for BIT_NOT (must be integer)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_int(~val.as_int()));
             break;
         }
         case OpCode::BIT_SHL: {
             Value b = pop();
             Value a = pop();
+            if (!a.is_int() || !b.is_int()) {
+                runtime_error("invalid operands for BIT_SHL (must be integers)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_int(a.as_int() << b.as_int()));
             break;
         }
         case OpCode::BIT_SHR: {
             Value b = pop();
             Value a = pop();
+            if (!a.is_int() || !b.is_int()) {
+                runtime_error("invalid operands for BIT_SHR (must be integers)");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             push(Value::make_int(a.as_int() >> b.as_int()));
             break;
         }
@@ -586,6 +646,10 @@ VMStepResult VM::step() {
         case OpCode::JUMP_IF_FALSE: {
             uint16_t target = read_short();
             Value condition = pop();
+            if (!condition.is_bool()) {
+                runtime_error("Condition for jump must be a boolean");
+                return VMStepResult::RUNTIME_ERROR;
+            }
             if (!condition.as_bool()) {
                 current_frame().ip = target;
             }
