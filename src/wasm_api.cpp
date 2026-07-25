@@ -186,7 +186,7 @@ int wasm_debug_step() {
 
 EMSCRIPTEN_KEEPALIVE
 int wasm_debug_current_line() {
-    if (g_debug_vm->frames().empty()) return 0;
+    if (!g_debug_vm || g_debug_vm->frames().empty()) return 0;
     CallFrame& frame = g_debug_vm->frames().back();
     const Chunk& chunk = g_debug_vm->program().functions[frame.fn_index].chunk;
     if (frame.ip < 0 || frame.ip >= static_cast<int>(chunk.lines.size())) return 0;
@@ -195,13 +195,17 @@ int wasm_debug_current_line() {
 
 EMSCRIPTEN_KEEPALIVE
 int wasm_debug_current_ip() {
-    if (g_debug_vm->frames().empty()) return 0;
+    if (!g_debug_vm || g_debug_vm->frames().empty()) return 0;
     return g_debug_vm->frames().back().ip;
 }
 
 EMSCRIPTEN_KEEPALIVE
 const char* wasm_debug_stack() {
     std::ostringstream ss;
+    if (!g_debug_vm) {
+        string_buffer = "";
+        return string_buffer.c_str();
+    }
     int size = static_cast<int>(g_debug_vm->stack().size());
     for (int i = 0; i < size; ++i) {
         ss << "[" << i << "] " << g_debug_vm->stack()[i].to_string() << "\n";
@@ -213,7 +217,7 @@ const char* wasm_debug_stack() {
 EMSCRIPTEN_KEEPALIVE
 const char* wasm_debug_variables() {
     std::ostringstream ss;
-    if (g_debug_vm->frames().empty()) {
+    if (!g_debug_vm || g_debug_vm->frames().empty()) {
         string_buffer = "";
         return string_buffer.c_str();
     }
@@ -231,13 +235,17 @@ const char* wasm_debug_variables() {
 
 EMSCRIPTEN_KEEPALIVE
 const char* wasm_debug_output() {
+    if (!g_debug_vm) {
+        string_buffer = "";
+        return string_buffer.c_str();
+    }
     string_buffer = g_debug_vm->output();
     return string_buffer.c_str();
 }
 
 EMSCRIPTEN_KEEPALIVE
 const char* wasm_debug_bytecode() {
-    if (g_debug_vm->frames().empty()) {
+    if (!g_debug_vm || g_debug_vm->frames().empty()) {
         string_buffer = "";
         return string_buffer.c_str();
     }
