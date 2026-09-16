@@ -1,0 +1,30 @@
+name: Build WebAssembly
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'Makefile'
+  workflow_dispatch:
+
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    container: emscripten/emsdk:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Build compiler and VM for WebAssembly
+        run: |
+          emcc --version | head -1
+          make -B wasm
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: minilang-wasm
+          path: |
+            web/minilang.js
+            web/minilang.wasm
