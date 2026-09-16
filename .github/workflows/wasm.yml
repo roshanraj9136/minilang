@@ -14,7 +14,7 @@ jobs:
     container: emscripten/emsdk:6.0.9
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Build compiler and VM for WebAssembly
         run: |
@@ -22,7 +22,7 @@ jobs:
           make -B wasm
 
       - name: Upload web build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: minilang-wasm
           path: |
