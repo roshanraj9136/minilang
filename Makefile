@@ -15,11 +15,11 @@ WASM_SRC = src/lexer.cpp src/ast.cpp src/parser.cpp src/semantic.cpp \
 WASM_TARGET_JS = web/minilang.js
 WASM_TARGET_WASM = web/minilang.wasm
 
-EMCC = emcc
+EMCC = em++
 EMCCFLAGS = -std=c++17 -O2 \
             -s WASM=1 \
             -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap"]' \
-            -s EXPORTED_FUNCTIONS='["_wasm_compile","_wasm_run","_wasm_debug_start","_wasm_debug_step","_wasm_debug_current_line","_wasm_debug_current_ip","_wasm_debug_stack","_wasm_debug_variables","_wasm_debug_output","_wasm_debug_bytecode","_wasm_disasm","_main"]' \
+            -s EXPORTED_FUNCTIONS='["_wasm_compile","_wasm_run","_wasm_debug_start","_wasm_debug_step","_wasm_debug_current_line","_wasm_debug_current_ip","_wasm_debug_stack","_wasm_debug_variables","_wasm_debug_output","_wasm_debug_bytecode","_wasm_disasm"]' \
             -s ALLOW_MEMORY_GROWTH=0 \
             -s TOTAL_MEMORY=16777216 \
             --no-entry
