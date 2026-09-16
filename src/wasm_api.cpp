@@ -250,56 +250,15 @@ const char* wasm_debug_bytecode() {
         return string_buffer.c_str();
     }
     CallFrame& frame = g_debug_vm->frames().back();
-    const Chunk& chunk = g_debug_vm->program().functions[frame.fn_index].chunk;
+    const CompiledFunction& func = g_debug_vm->program().functions[frame.fn_index];
     std::ostringstream ss;
 
+    // Reuse the disassembler so every opcode advances by its real operand size;
+    // a separate decoder here fell out of sync after opcodes like NEW_ARRAY.
     int offset = 0;
-    while (offset < static_cast<int>(chunk.code.size())) {
-        bool is_current = (offset == frame.ip);
-
-        ss << (is_current ? "> " : "  ") 
-           << std::setw(4) << std::setfill('0') << offset << " ";
-
-        uint8_t op = chunk.code[offset];
-        OpCode opcode = static_cast<OpCode>(op);
-        ss << opcode_to_string(opcode);
-
-        if (opcode == OpCode::PUSH_INT || opcode == OpCode::PUSH_STRING) {
-            uint16_t arg = (chunk.code[offset + 1] << 8) | chunk.code[offset + 2];
-            ss << " " << arg << " (" << chunk.constants[arg].to_string() << ")";
-            offset += 3;
-        } else if (opcode == OpCode::LOAD_LOCAL || opcode == OpCode::STORE_LOCAL) {
-            uint16_t arg = (chunk.code[offset + 1] << 8) | chunk.code[offset + 2];
-            ss << " " << arg;
-            const auto& locals = last_program.functions[frame.fn_index].debug_locals;
-            for (const auto& loc : locals) {
-                if (loc.slot == arg) {
-                    ss << " (" << loc.name << ")";
-                    break;
-                }
-            }
-            offset += 3;
-        } else if (opcode == OpCode::JUMP || opcode == OpCode::JUMP_IF_FALSE) {
-            uint16_t arg = (chunk.code[offset + 1] << 8) | chunk.code[offset + 2];
-            ss << " " << std::setw(4) << std::setfill('0') << arg;
-            offset += 3;
-        } else if (opcode == OpCode::CALL) {
-            uint16_t fn_idx = (chunk.code[offset + 1] << 8) | chunk.code[offset + 2];
-            uint8_t argc = chunk.code[offset + 3];
-            ss << " fn:" << fn_idx << " argc:" << static_cast<int>(argc);
-            offset += 4;
-        } else if (opcode == OpCode::LOAD_GLOBAL || opcode == OpCode::STORE_GLOBAL) {
-            uint16_t arg = (chunk.code[offset + 1] << 8) | chunk.code[offset + 2];
-            ss << " " << arg;
-            offset += 3;
-        } else if (opcode == OpCode::CALL_BUILTIN || opcode == OpCode::READ) {
-            uint8_t arg = chunk.code[offset + 1];
-            ss << " " << static_cast<int>(arg);
-            offset += 2;
-        } else {
-            offset += 1;
-        }
-        ss << "\n";
+    while (offset < static_cast<int>(func.chunk.code.size())) {
+        ss << (offset == frame.ip ? "> " : "  ")
+           << Disassembler::disassemble_instruction(func.chunk, offset, func.debug_locals) << "\n";
     }
 
     string_buffer = ss.str();
